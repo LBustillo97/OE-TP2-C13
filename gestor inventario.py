@@ -99,22 +99,205 @@ def plot_revenue_over_time(sales):
     plt.tight_layout()
     plt.show()
 
-# Ejemplo de uso
 if __name__ == "__main__":
-    products, sales = load_data()
+    from pathlib import Path
 
-    # Mostrar primeras filas
-    print("Productos:")
-    print(products.head())
-    print("\nVentas:")
-    print(sales.head())
+    print("Directorio de trabajo:", Path.cwd())
+    print("PRODUCTS_CSV:", PRODUCTS_CSV.resolve())
+    print("SALES_CSV:", SALES_CSV.resolve())
 
-    # Graficar
-    plot_sales_by_product(sales, products)
-    plot_revenue_by_product(sales)
-    plot_revenue_over_time(sales)
+    # Cargar datos con manejo de errores
+    try:
+        products, sales = load_data()
+    except Exception as e:
+        print("Error al cargar datos:", e)
+        input("Presiona Enter para salir...")
+        raise
 
-    # Ejemplo de edición: agregar un producto y una venta
-    # products = add_product(products, 21, 'nuevo_producto', 12345)
-    # sales = add_sale(sales, '2026-05-06', 1016, 21, 'nuevo_producto', 2, 12345)
-    # save_data(products, sales)
+    def safe_show(fig_name=None):
+        try:
+            plt.show()
+        except Exception:
+            if fig_name:
+                plt.savefig(fig_name, bbox_inches='tight')
+                print(f"Gráfico guardado en {fig_name}")
+            else:
+                print("No se pudo mostrar el gráfico; use plt.savefig() para guardar.")
+
+    def input_int(prompt, allow_empty=False):
+        while True:
+            val = input(prompt)
+            if allow_empty and val.strip()=="":
+                return None
+            try:
+                return int(val)
+            except ValueError:
+                print("Ingrese un número entero válido.")
+
+    def input_float(prompt, allow_empty=False):
+        while True:
+            val = input(prompt)
+            if allow_empty and val.strip()=="":
+                return None
+            try:
+                return float(val)
+            except ValueError:
+                print("Ingrese un número válido (ej: 12500).")
+
+    def add_product_interactive():
+        print("Agregar producto")
+        idp = input_int("id_producto: ")
+        nombre = input("producto (nombre): ").strip()
+        precio = input_float("precio: ")
+        try:
+            nonlocal_products = add_product(products, idp, nombre, precio)
+            return nonlocal_products
+        except Exception as e:
+            print("Error al agregar producto:", e)
+            return products
+
+    def update_product_interactive():
+        print("Actualizar producto")
+        idp = input_int("id_producto a actualizar: ")
+        if idp not in products['id_producto'].values:
+            print("id_producto no encontrado.")
+            return products
+        nombre = input("Nuevo nombre (enter para no cambiar): ").strip()
+        precio = input("Nuevo precio (enter para no cambiar): ").strip()
+        fields = {}
+        if nombre != "":
+            fields['producto'] = nombre
+        if precio != "":
+            try:
+                fields['precio'] = float(precio)
+            except ValueError:
+                print("Precio inválido, no se actualizará ese campo.")
+        try:
+            return update_product(products, idp, **fields)
+        except Exception as e:
+            print("Error al actualizar:", e)
+            return products
+
+    def delete_product_interactive():
+        print("Eliminar producto")
+        idp = input_int("id_producto a eliminar: ")
+        confirm = input(f"Confirma eliminar producto {idp}? (s/n): ").lower()
+        if confirm == 's':
+            return delete_product(products, idp)
+        print("Eliminación cancelada.")
+        return products
+
+    def add_sale_interactive():
+        print("Agregar venta")
+        fecha = input("fecha (YYYY-MM-DD): ").strip()
+        idv = input_int("id_venta: ")
+        idp = input_int("id_producto: ")
+        product0 = input("product0 (nombre producto): ").strip()
+        cantidad = input_int("cantidad: ")
+        precio_unitario = input_float("precio_unitario: ")
+        try:
+            nonlocal_sales = add_sale(sales, fecha, idv, idp, product0, cantidad, precio_unitario)
+            return nonlocal_sales
+        except Exception as e:
+            print("Error al agregar venta:", e)
+            return sales
+
+    def update_sale_interactive():
+        print("Actualizar venta")
+        idv = input_int("id_venta a actualizar: ")
+        if idv not in sales['id_venta'].values:
+            print("id_venta no encontrado.")
+            return sales
+        # Pedir campos opcionales
+        fecha = input("Nueva fecha (enter para no cambiar): ").strip()
+        cantidad = input("Nueva cantidad (enter para no cambiar): ").strip()
+        precio_unitario = input("Nuevo precio_unitario (enter para no cambiar): ").strip()
+        fields = {}
+        if fecha != "":
+            fields['fecha'] = pd.to_datetime(fecha)
+        if cantidad != "":
+            try:
+                fields['cantidad'] = int(cantidad)
+            except ValueError:
+                print("Cantidad inválida; no se actualizará.")
+        if precio_unitario != "":
+            try:
+                fields['precio_unitario'] = float(precio_unitario)
+            except ValueError:
+                print("Precio inválido; no se actualizará.")
+        try:
+            return update_sale(sales, idv, **fields)
+        except Exception as e:
+            print("Error al actualizar venta:", e)
+            return sales
+
+    def delete_sale_interactive():
+        print("Eliminar venta")
+        idv = input_int("id_venta a eliminar: ")
+        confirm = input(f"Confirma eliminar venta {idv}? (s/n): ").lower()
+        if confirm == 's':
+            return delete_sale(sales, idv)
+        print("Eliminación cancelada.")
+        return sales
+
+    # Menú principal
+    while True:
+        print("\n--- Menú principal ---")
+        print("1 - Listar productos")
+        print("2 - Agregar producto")
+        print("3 - Actualizar producto")
+        print("4 - Eliminar producto")
+        print("5 - Listar ventas")
+        print("6 - Agregar venta")
+        print("7 - Actualizar venta")
+        print("8 - Eliminar venta")
+        print("9 - Mostrar gráfico: cantidad vendida por producto")
+        print("10 - Mostrar gráfico: ingresos por producto")
+        print("11 - Mostrar gráfico: ingresos por fecha")
+        print("12 - Guardar cambios en CSV")
+        print("0 - Salir")
+        try:
+            opt = int(input("> "))
+        except ValueError:
+            print("Ingrese una opción válida.")
+            continue
+
+        if opt == 0:
+            print("Saliendo...")
+            break
+        elif opt == 1:
+            print(products.to_string(index=False))
+        elif opt == 2:
+            products = add_product_interactive()
+        elif opt == 3:
+            products = update_product_interactive()
+        elif opt == 4:
+            products = delete_product_interactive()
+        elif opt == 5:
+            print(sales.to_string(index=False))
+        elif opt == 6:
+            sales = add_sale_interactive()
+        elif opt == 7:
+            sales = update_sale_interactive()
+        elif opt == 8:
+            sales = delete_sale_interactive()
+        elif opt == 9:
+            plot_sales_by_product(sales, products)
+            safe_show("ventas_por_producto.png")
+        elif opt == 10:
+            plot_revenue_by_product(sales)
+            safe_show("ingresos_por_producto.png")
+        elif opt == 11:
+            plot_revenue_over_time(sales)
+            safe_show("ingresos_por_fecha.png")
+        elif opt == 12:
+            try:
+                save_data(products, sales)
+                print("Cambios guardados en CSV.")
+            except Exception as e:
+                print("Error al guardar:", e)
+        else:
+            print("Opción no reconocida.")
+
+    input("Presiona Enter para terminar...")
+
