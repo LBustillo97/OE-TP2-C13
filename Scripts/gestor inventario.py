@@ -26,13 +26,14 @@ def save_data(products, sales):
     products.to_csv(PRODUCTS_CSV, sep=';', index=False)
     sales.to_csv(SALES_CSV, sep=';', index=False)
 
-# Operaciones CRUD sobre productos
+# Operaciones CRUD sobre productos, luego son llamadas por las funciones interactive
+#agregar producto
 def add_product(products, id_producto, producto, precio):
     if id_producto in products['id_producto'].values:
         raise ValueError("id_producto ya existe")
     new = pd.DataFrame([{'id_producto':id_producto, 'producto':producto, 'precio':precio}])
     return pd.concat([products, new], ignore_index=True)
-
+#actualiza producto
 def update_product(products, id_producto, **fields):
     idx = products.index[products['id_producto']==id_producto]
     if idx.empty:
@@ -41,11 +42,12 @@ def update_product(products, id_producto, **fields):
         if k in products.columns:
             products.loc[idx, k] = v
     return products
-
+#elimina producto
 def delete_product(products, id_producto):
     return products[products['id_producto']!=id_producto].reset_index(drop=True)
 
-# Operaciones CRUD sobre ventas
+# Operaciones CRUD sobre ventas, luego son llamadas por las funciones interactive
+#agrega venta
 def add_sale(sales, fecha, id_venta, id_producto, product0, cantidad, precio_unitario):
     if id_venta in sales['id_venta'].values:
         raise ValueError("id_venta ya existe")
@@ -60,23 +62,24 @@ def add_sale(sales, fecha, id_venta, id_producto, product0, cantidad, precio_uni
         'total': total
     }])
     return pd.concat([sales, new], ignore_index=True)
-
+#actualiza venta
 def update_sale(sales, id_venta, **fields):
-    idx = sales.index[sales['id_venta']==id_venta]
+    idx = sales.index[sales['id_venta']==id_venta]  #idx = index
     if idx.empty:
         raise ValueError("Venta no encontrada")
     for k,v in fields.items():
         if k in sales.columns:
-            sales.loc[idx, k] = v
+            sales.loc[idx, k] = v           
     # recalcular total si cambian cantidad o precio_unitario
     if 'cantidad' in fields or 'precio_unitario' in fields:
         sales.loc[idx, 'total'] = sales.loc[idx, 'cantidad'] * sales.loc[idx, 'precio_unitario']
     return sales
-
+#elimina venta
 def delete_sale(sales, id_venta):
     return sales[sales['id_venta']!=id_venta].reset_index(drop=True)
 
 # Gráficos
+#venta por producto
 def plot_sales_by_product(sales, products):
     df = sales.groupby('product0', as_index=False).agg({'cantidad':'sum', 'total':'sum'}).sort_values('cantidad', ascending=False)
     plt.figure(figsize=(10,6))
@@ -86,7 +89,7 @@ def plot_sales_by_product(sales, products):
     plt.ylabel('Producto')
     plt.tight_layout()
     plt.show()
-
+#Ingreso por producto
 def plot_revenue_by_product(sales):
     df = sales.groupby('product0', as_index=False).agg({'total':'sum'}).sort_values('total', ascending=False)
     plt.figure(figsize=(10,6))
@@ -96,7 +99,7 @@ def plot_revenue_by_product(sales):
     plt.ylabel('Producto')
     plt.tight_layout()
     plt.show()
-
+#venta por fecha
 def plot_revenue_over_time(sales):
     df = sales.groupby('fecha', as_index=False).agg({'total':'sum'}).sort_values('fecha')
     plt.figure(figsize=(10,5))
@@ -107,6 +110,9 @@ def plot_revenue_over_time(sales):
     plt.tight_layout()
     plt.show()
 
+
+#Codigo imprime directorios
+#ejecuta
 if __name__ == "__main__":
     from pathlib import Path
 
@@ -122,6 +128,7 @@ if __name__ == "__main__":
         input("Presiona Enter para salir...")
         raise
 
+#funcion para guardar el grafico
     def safe_show(fig_name=None):
         try:
             plt.show()
@@ -131,7 +138,7 @@ if __name__ == "__main__":
                 print(f"Gráfico guardado en {fig_name}")
             else:
                 print("No se pudo mostrar el gráfico; use plt.savefig() para guardar.")
-
+#Para verificar el input del usuario al ingresar datos de valores enteros
     def input_int(prompt, allow_empty=False):
         while True:
             val = input(prompt)
@@ -141,7 +148,7 @@ if __name__ == "__main__":
                 return int(val)
             except ValueError:
                 print("Ingrese un número entero válido.")
-
+#Para verificar el input del usuario al ingresar datos de valores con decimales
     def input_float(prompt, allow_empty=False):
         while True:
             val = input(prompt)
@@ -152,6 +159,8 @@ if __name__ == "__main__":
             except ValueError:
                 print("Ingrese un número válido (ej: 12500).")
 
+#Interaccion para modificar las bases de datos
+#Agrega producto
     def add_product_interactive():
         print("Agregar producto")
         idp = input_int("id_producto: ")
@@ -163,7 +172,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Error al agregar producto:", e)
             return products
-
+#Actualiza producto
     def update_product_interactive():
         print("Actualizar producto")
         idp = input_int("id_producto a actualizar: ")
@@ -185,7 +194,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Error al actualizar:", e)
             return products
-
+#Elimina producto
     def delete_product_interactive():
         print("Eliminar producto")
         idp = input_int("id_producto a eliminar: ")
@@ -194,7 +203,7 @@ if __name__ == "__main__":
             return delete_product(products, idp)
         print("Eliminación cancelada.")
         return products
-
+#Agrega venta
     def add_sale_interactive():
         print("Agregar venta")
         fecha = input("fecha (YYYY-MM-DD): ").strip()
@@ -209,7 +218,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Error al agregar venta:", e)
             return sales
-
+#Actualiza venta
     def update_sale_interactive():
         print("Actualizar venta")
         idv = input_int("id_venta a actualizar: ")
@@ -238,7 +247,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Error al actualizar venta:", e)
             return sales
-
+#Elimina venta
     def delete_sale_interactive():
         print("Eliminar venta")
         idv = input_int("id_venta a eliminar: ")
