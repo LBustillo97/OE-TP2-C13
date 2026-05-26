@@ -1,3 +1,11 @@
+'''Poner en el bash:
+py -3 --version
+py -3 -m pip install pandas matplotlib
+py -3 --version
+py -3 -m pip install seaborn matplotlib
+py -3 --version
+py -3 -m pip install pathlib matplotlib
+'''
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
