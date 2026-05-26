@@ -4,8 +4,8 @@ import seaborn as sns
 from pathlib import Path
 
 # Rutas a los archivos CSV
-PRODUCTS_CSV = Path("Datos/BASE DE DATOS PRODUCTOS.csv")
-SALES_CSV = Path("Datos/BASE DE DATOS VENTA PRODUCTOS.csv")
+PRODUCTS_CSV = Path("./Datos/BASE DE DATOS PRODUCTOS.csv")
+SALES_CSV = Path("./Datos/BASE DE DATOS VENTA PRODUCTOS.csv")
 
 # Cargar datos (delimitador ;)
 def load_data():
